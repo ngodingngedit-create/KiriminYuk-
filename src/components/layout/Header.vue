@@ -221,14 +221,17 @@ export default {
       isDrawerOpen.value = !isDrawerOpen.value;
       if (isDrawerOpen.value) {
         document.body.style.overflow = 'hidden';
+        document.body.classList.add('drawer-open');
       } else {
         document.body.style.overflow = '';
+        document.body.classList.remove('drawer-open');
       }
     };
 
     const closeDrawer = () => {
       isDrawerOpen.value = false;
       document.body.style.overflow = '';
+      document.body.classList.remove('drawer-open');
     };
 
     const toggleLang = () => {
@@ -601,9 +604,9 @@ export default {
 /* Responsiveness overrides */
 @media (max-width: 1024px) {
   .header {
-    top: 12px;
-    height: 72px;
-    width: calc(100% - 24px);
+    top: 10px;
+    height: 58px;
+    width: calc(100% - 20px);
     /* Mobile top style starts as clean glass too */
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(12px);
@@ -620,10 +623,28 @@ export default {
   }
   
   .navbar-container {
-    padding-left: 16px;
-    padding-right: 16px;
+    padding-left: 14px;
+    padding-right: 14px;
   }
-  
+
+  .logo-icon-wrapper {
+    width: 36px;
+    height: 36px;
+  }
+
+  .logo-icon-svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .logo-text {
+    font-size: 16px;
+  }
+
+  .logo-subtext {
+    font-size: 8px;
+  }
+
   .desktop-nav {
     display: none;
   }
@@ -775,5 +796,20 @@ export default {
   .btn-drawer-cta {
     width: 100%;
   }
+}
+</style>
+
+<!-- Global (non-scoped) rules: hide bottom bar when mobile drawer is open -->
+<style>
+/* Bottom bar smooth hide when mobile drawer opens */
+.dashboard-bottom-bar {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity  0.3s ease;
+}
+
+body.drawer-open .dashboard-bottom-bar {
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
 }
 </style>

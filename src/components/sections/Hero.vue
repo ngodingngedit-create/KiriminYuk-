@@ -372,102 +372,55 @@ export default {
 
 
 
-/* ─────────────────────────────────────────────
-   Premium Glassmorphic Tracking Card
-───────────────────────────────────────────── */
+/* Simple Clean Glassmorphic Tracking Card */
 .glass-tracking-card {
-  background: linear-gradient(
-    145deg,
-    rgba(6, 18, 50, 0.72) 0%,
-    rgba(10, 30, 80, 0.60) 60%,
-    rgba(0, 243, 255, 0.06) 100%
-  );
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 20px;
-  padding: 32px 28px 28px;
+  border-radius: 16px;
+  padding: 28px 24px;
   width: 100%;
-  max-width: 440px;
-  box-shadow:
-    0 24px 64px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    inset 0 0 0 1px rgba(0, 243, 255, 0.06);
+  max-width: 420px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
   text-align: left;
   margin-top: 40px;
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.35s ease, box-shadow 0.35s ease;
-}
-
-/* Glowing cyan top accent bar */
-.glass-tracking-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 10%;
-  width: 80%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #00f3ff 40%, #0a65ff 60%, transparent);
-  border-radius: 0 0 4px 4px;
-  opacity: 0.9;
-}
-
-/* Subtle radial glow inside top-right corner */
-.glass-tracking-card::after {
-  content: '';
-  position: absolute;
-  top: -40px;
-  right: -40px;
-  width: 160px;
-  height: 160px;
-  background: radial-gradient(circle, rgba(0, 243, 255, 0.12) 0%, transparent 70%);
-  pointer-events: none;
-}
-
-.glass-tracking-card:hover {
-  transform: translateY(-6px);
-  box-shadow:
-    0 32px 80px rgba(0, 0, 0, 0.55),
-    0 0 40px rgba(0, 243, 255, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
 .card-header-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
 .green-status-dot {
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background-color: #00f3ff;
-  box-shadow: 0 0 10px #00f3ff, 0 0 20px rgba(0, 243, 255, 0.45);
+  background-color: #22d3a5;
   flex-shrink: 0;
 }
 
 @keyframes pulse-cyan {
-  0%, 100% { box-shadow: 0 0 8px #00f3ff, 0 0 18px rgba(0, 243, 255, 0.35); opacity: 1; }
-  50%       { box-shadow: 0 0 18px #00f3ff, 0 0 36px rgba(0, 243, 255, 0.6); opacity: 0.7; }
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
 }
 
 .animate-pulse-cyan {
-  animation: pulse-cyan 2.2s ease-in-out infinite;
+  animation: pulse-cyan 2s ease-in-out infinite;
 }
 
 .card-title {
   color: #ffffff;
-  font-size: 18px;
-  font-weight: 800;
+  font-size: 16px;
+  font-weight: 700;
   font-family: var(--font-heading);
-  letter-spacing: -0.3px;
 }
 
 .card-desc {
-  font-size: 13px;
+  font-size: 12.5px;
+
   color: rgba(255, 255, 255, 0.72);
   line-height: 1.65;
   margin-bottom: 22px;
@@ -520,24 +473,11 @@ export default {
   transform: translateY(-1px);
 }
 
-/* Glass result timeline panel */
+/* Result panel */
 .tracking-result-panel {
-  margin-top: 20px;
-  padding-top: 20px;
-  background: rgba(0, 243, 255, 0.04);
-  border-radius: 12px;
-  padding: 16px;
-  position: relative;
-}
-
-.tracking-result-panel::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 10%;
-  width: 80%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(0, 243, 255, 0.4), transparent);
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .result-header {

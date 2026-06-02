@@ -141,6 +141,11 @@
                           <p class="detail-value advantage-text">{{ rate.advantage }}</p>
                         </div>
                       </div>
+                      <!-- Price row shown only on mobile inside body -->
+                      <div class="price-in-body">
+                        <span class="detail-label">Ongkos Kirim</span>
+                        <span class="body-price-value">{{ formatRupiah(rate.cost) }}</span>
+                      </div>
                       <div class="accordion-footer-action">
                         <button @click.stop="selectService(rate)" class="btn btn-primary btn-select-accordion">
                           Pilih Layanan Ini &rarr;
@@ -826,6 +831,22 @@ export default {
   border-radius: var(--radius-sm);
 }
 
+/* Price row inside accordion body — hidden on desktop, shown on mobile */
+.price-in-body {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+  margin-top: 4px;
+}
+
+.body-price-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--primary);
+}
+
 /* Select Box Placeholder style override */
 .field-select.placeholder-selected {
   color: var(--text-light);
@@ -905,27 +926,45 @@ export default {
 
 @media (max-width: 768px) {
   .accordion-header {
-    padding: 16px;
+    padding: 14px 16px;
   }
 
   .accordion-header-left {
-    gap: 12px;
+    gap: 10px;
+  }
+
+  .service-icon-bg {
+    width: 34px;
+    height: 34px;
   }
 
   .service-name {
-    font-size: 14px;
+    font-size: 13px;
+    white-space: normal;
+    overflow: visible;
+    max-width: none;
+  }
+
+  .service-subtext {
+    font-size: 11px;
+  }
+
+  /* Hide price from accordion header on mobile */
+  .accordion-price-eta {
+    display: none;
+  }
+
+  /* Show price inside accordion body on mobile */
+  .price-in-body {
+    display: flex;
   }
 
   .accordion-header-right {
-    gap: 12px;
-  }
-
-  .accordion-price {
-    font-size: 14px;
+    gap: 10px;
   }
 
   .accordion-content {
-    padding: 16px;
+    padding: 14px 16px;
   }
 
   .accordion-details-grid {
@@ -943,6 +982,44 @@ export default {
   }
 }
 
+@media (max-width: 480px) {
+  .accordion-header {
+    padding: 12px 14px;
+  }
+
+  .accordion-header-left {
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .service-icon-bg {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+  }
+
+  .service-name {
+    font-size: 12.5px;
+  }
+
+  .service-subtext {
+    font-size: 10px;
+  }
+
+  .accordion-eta-badge {
+    display: none;
+  }
+
+  .accordion-arrow-box svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .body-price-value {
+    font-size: 16px;
+  }
+}
+
 @media (max-width: 640px) {
   .section-title {
     font-size: 28px;
@@ -950,6 +1027,20 @@ export default {
   
   .section-description {
     font-size: 14px;
+  }
+
+  /* Fix info footer overflow — use inset card style instead of negative margins */
+  .calculator-info-footer {
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 20px;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    gap: 10px;
+  }
+
+  .info-footer-text {
+    font-size: 12px;
   }
 }
 </style>
