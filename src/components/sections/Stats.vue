@@ -4,73 +4,17 @@
       <div class="marquee-track">
         <!-- First Set -->
         <div class="marquee-content">
-          <div class="marquee-item">
-            <Package :size="22" class="marquee-icon" />
-            <span class="marquee-logo">Kirimin<span>Yuk!</span></span>
-          </div>
-          <div class="marquee-item">
-            <Zap :size="22" class="marquee-icon" />
-            <span class="marquee-logo">Kirimin<span>Yuk!</span></span>
-          </div>
-          <div class="marquee-item">
-            <Truck :size="22" class="marquee-icon" />
-            <span class="marquee-logo">Kirimin<span>Yuk!</span></span>
-          </div>
-          <div class="marquee-item">
-            <Package :size="22" class="marquee-icon" />
-            <span class="marquee-logo">Kirimin<span>Yuk!</span></span>
-          </div>
-          <div class="marquee-item">
-            <Zap :size="22" class="marquee-icon" />
-            <span class="marquee-logo">Kirimin<span>Yuk!</span></span>
-          </div>
-          <div class="marquee-item">
-            <Truck :size="22" class="marquee-icon" />
-            <span class="marquee-logo">Kirimin<span>Yuk!</span></span>
-          </div>
-          <div class="marquee-item">
-            <Package :size="22" class="marquee-icon" />
-            <span class="marquee-logo">Kirimin<span>Yuk!</span></span>
-          </div>
-          <div class="marquee-item">
-            <Zap :size="22" class="marquee-icon" />
-            <span class="marquee-logo">Kirimin<span>Yuk!</span></span>
+          <div v-for="i in 8" :key="'m1-' + i" class="marquee-item">
+            <img src="/logo/logo (3).png" class="marquee-brand-logo" alt="Qirimin Logo" />
+            <span class="marquee-logo">Qirimin<span>!</span></span>
           </div>
         </div>
 
         <!-- Duplicate Set for Seamless Loop -->
         <div class="marquee-content" aria-hidden="true">
-          <div class="marquee-item">
-            <Package :size="22" class="marquee-icon" />
-            <span class="marquee-logo">Kirimin<span>Yuk!</span></span>
-          </div>
-          <div class="marquee-item">
-            <Zap :size="22" class="marquee-icon" />
-            <span class="marquee-logo">Kirimin<span>Yuk!</span></span>
-          </div>
-          <div class="marquee-item">
-            <Truck :size="22" class="marquee-icon" />
-            <span class="marquee-logo">Kirimin<span>Yuk!</span></span>
-          </div>
-          <div class="marquee-item">
-            <Package :size="22" class="marquee-icon" />
-            <span class="marquee-logo">Kirimin<span>Yuk!</span></span>
-          </div>
-          <div class="marquee-item">
-            <Zap :size="22" class="marquee-icon" />
-            <span class="marquee-logo">Kirimin<span>Yuk!</span></span>
-          </div>
-          <div class="marquee-item">
-            <Truck :size="22" class="marquee-icon" />
-            <span class="marquee-logo">Kirimin<span>Yuk!</span></span>
-          </div>
-          <div class="marquee-item">
-            <Package :size="22" class="marquee-icon" />
-            <span class="marquee-logo">Kirimin<span>Yuk!</span></span>
-          </div>
-          <div class="marquee-item">
-            <Zap :size="22" class="marquee-icon" />
-            <span class="marquee-logo">Kirimin<span>Yuk!</span></span>
+          <div v-for="i in 8" :key="'m2-' + i" class="marquee-item">
+            <img src="/logo/logo (3).png" class="marquee-brand-logo" alt="Qirimin Logo" />
+            <span class="marquee-logo">Qirimin<span>!</span></span>
           </div>
         </div>
       </div>
@@ -79,15 +23,8 @@
 </template>
 
 <script>
-import { Package, Zap, Truck } from '@lucide/vue';
-
 export default {
-  name: 'StatsBannerSection',
-  components: {
-    Package,
-    Zap,
-    Truck
-  }
+  name: 'StatsBannerSection'
 };
 </script>
 
@@ -133,9 +70,11 @@ export default {
   gap: 16px;
 }
 
-.marquee-icon {
-  color: #00f3ff;
-  stroke-width: 2.2;
+.marquee-brand-logo {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+  display: block;
 }
 
 .marquee-logo {
@@ -163,6 +102,10 @@ export default {
 @media (max-width: 768px) {
   .stats-banner-section {
     padding: 18px 0;
+  }
+
+  .marquee-brand-logo {
+    height: 24px;
   }
 
   .marquee-logo {

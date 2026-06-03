@@ -40,6 +40,29 @@
         
         <!-- Left Column: Multi-Section Input Form -->
         <div class="form-container-column">
+          
+          <!-- Tab Switcher -->
+          <div class="tab-switcher">
+            <button
+              type="button"
+              class="tab-btn"
+              :class="{ 'tab-btn--active': activeTab === 'domestik' }"
+              @click="switchTab('domestik')"
+            >
+              <Globe :size="16" class="tab-icon" />
+              <span>Domestik</span>
+            </button>
+            <button
+              type="button"
+              class="tab-btn"
+              :class="{ 'tab-btn--active': activeTab === 'internasional' }"
+              @click="switchTab('internasional')"
+            >
+              <Globe :size="16" class="tab-icon" />
+              <span>Internasional</span>
+            </button>
+          </div>
+
           <form @submit.prevent="submitForm" class="shipment-multi-form">
             
             <!-- Section A: Detail Pengirim -->
@@ -80,23 +103,86 @@
                   <span v-if="errors.senderPhone" class="error-msg">Nomor WhatsApp tidak valid</span>
                 </div>
 
-                <div class="form-field-group">
-                  <label class="field-input-label">Kota Asal</label>
-                  <div class="select-field-wrapper">
-                    <MapPin :size="16" class="select-pin-icon" />
-                    <select 
-                      v-model="senderCity" 
-                      class="form-field-select icon-padding"
+                <!-- Domestik: Autocomplete Kota Asal -->
+                <div class="form-field-group" v-if="activeTab === 'domestik'">
+                  <label class="field-input-label">Kota/Kecamatan/Kode Pos Asal</label>
+                  <div class="custom-select-container">
+                    <!-- <MapPin :size="16" class="select-pin-icon" /> -->
+                    <input 
+                      type="text" 
+                      v-model="originSearchQuery" 
+                      placeholder="Ketik kota/kecamatan/kode pos" 
+                      class="form-field-input icon-padding autocomplete-input"
                       :class="{ 'field-error': errors.senderCity }"
-                      required
-                    >
-                      <option value="" disabled>Pilih kota asal</option>
-                      <option v-for="city in cities" :key="'sender-' + city.value" :value="city.value">
-                        {{ city.name }}
-                      </option>
-                    </select>
+                      @focus="isOriginFocused = true"
+                      @blur="handleOriginBlur"
+                      autocomplete="off"
+                    />
+                    <div v-if="isOriginFocused && filteredOriginRegions.length > 0" class="autocomplete-dropdown animate-fade-in">
+                      <div 
+                        v-for="region in filteredOriginRegions" 
+                        :key="'orig-reg-' + region.value" 
+                        class="autocomplete-item"
+                        @mousedown.prevent="selectOriginRegion(region)"
+                      >
+                        <!-- <MapPin :size="14" class="dropdown-pin-icon" /> -->
+                        <div class="region-text">
+                          <span class="region-main">{{ region.subdistrict }}, {{ region.district }}</span>
+                          <span class="region-sub">{{ region.city }} - {{ region.zip }}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <span v-if="errors.senderCity" class="error-msg">Kota asal wajib dipilih</span>
+                  <span v-if="errors.senderCity" class="error-msg">Kota asal wajib diketik dan dipilih</span>
+                </div>
+
+                <!-- Internasional: Country of Origin -->
+                <div class="form-field-group" v-else>
+                  <label class="field-input-label">Negara Asal</label>
+                  <div class="custom-select-container">
+                    <button
+                      type="button"
+                      class="custom-select-trigger"
+                      :class="{ 'placeholder-selected': !senderCountry, 'field-error': errors.senderCity }"
+                      @click.stop="toggleSenderCountryDropdown"
+                    >
+                      <div class="trigger-content" v-if="senderCountry">
+                        <img :src="`/flags/${senderCountry.toLowerCase()}.png`" class="flag-img-select" alt="" />
+                        <span>{{ getCountryName(senderCountry) }}</span>
+                      </div>
+                      <span v-else class="placeholder">Pilih Negara Asal</span>
+                      <ChevronDown :size="16" class="select-chevron" :class="{ 'rotated': isSenderCountryDropdownOpen }" />
+                    </button>
+
+                    <div v-if="isSenderCountryDropdownOpen" class="custom-options-container animate-fade-in" @click.stop>
+                      <div class="search-box-wrapper">
+                        <Search :size="14" class="search-icon" />
+                        <input
+                          type="text"
+                          v-model="searchQuerySender"
+                          placeholder="Cari negara..."
+                          class="dropdown-search-input"
+                          ref="senderCountrySearchInput"
+                        />
+                      </div>
+                      <div class="options-list">
+                        <div
+                          v-for="country in filteredSenderCountries"
+                          :key="'sender-opt-' + country.code"
+                          class="custom-option"
+                          :class="{ 'is-selected': senderCountry === country.code }"
+                          @click="selectSenderCountry(country.code)"
+                        >
+                          <img :src="`/flags/${country.code.toLowerCase()}.png`" class="flag-img-option" alt="" />
+                          <span>{{ country.name }}</span>
+                        </div>
+                        <div v-if="filteredSenderCountries.length === 0" class="no-options-found">
+                          Negara tidak ditemukan
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <span v-if="errors.senderCity" class="error-msg">Negara asal wajib dipilih</span>
                 </div>
               </div>
 
@@ -150,23 +236,86 @@
                   <span v-if="errors.receiverPhone" class="error-msg">Nomor WhatsApp tidak valid</span>
                 </div>
 
-                <div class="form-field-group">
-                  <label class="field-input-label">Kota Tujuan</label>
-                  <div class="select-field-wrapper">
-                    <MapPin :size="16" class="select-pin-icon" />
-                    <select 
-                      v-model="receiverCity" 
-                      class="form-field-select icon-padding"
+                <!-- Domestik: Autocomplete Kota Tujuan -->
+                <div class="form-field-group" v-if="activeTab === 'domestik'">
+                  <label class="field-input-label">Kota/Kecamatan/Kode Pos Tujuan</label>
+                  <div class="custom-select-container">
+                    <!-- <MapPin :size="16" class="select-pin-icon" /> -->
+                    <input 
+                      type="text" 
+                      v-model="destSearchQuery" 
+                      placeholder="Ketik kota/kecamatan/kode pos" 
+                      class="form-field-input icon-padding autocomplete-input"
                       :class="{ 'field-error': errors.receiverCity }"
-                      required
-                    >
-                      <option value="" disabled>Pilih kota tujuan</option>
-                      <option v-for="city in cities" :key="'receiver-' + city.value" :value="city.value">
-                        {{ city.name }}
-                      </option>
-                    </select>
+                      @focus="isDestFocused = true"
+                      @blur="handleDestBlur"
+                      autocomplete="off"
+                    />
+                    <div v-if="isDestFocused && filteredDestRegions.length > 0" class="autocomplete-dropdown animate-fade-in">
+                      <div 
+                        v-for="region in filteredDestRegions" 
+                        :key="'dest-reg-' + region.value" 
+                        class="autocomplete-item"
+                        @mousedown.prevent="selectDestRegion(region)"
+                      >
+                        <MapPin :size="14" class="dropdown-pin-icon" />
+                        <div class="region-text">
+                          <span class="region-main">{{ region.subdistrict }}, {{ region.district }}</span>
+                          <span class="region-sub">{{ region.city }} - {{ region.zip }}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <span v-if="errors.receiverCity" class="error-msg">Kota tujuan wajib dipilih</span>
+                  <span v-if="errors.receiverCity" class="error-msg">Kota tujuan wajib diketik dan dipilih</span>
+                </div>
+
+                <!-- Internasional: Destination Country -->
+                <div class="form-field-group" v-else>
+                  <label class="field-input-label">Negara Tujuan</label>
+                  <div class="custom-select-container">
+                    <button
+                      type="button"
+                      class="custom-select-trigger"
+                      :class="{ 'placeholder-selected': !receiverCountry, 'field-error': errors.receiverCity }"
+                      @click.stop="toggleReceiverCountryDropdown"
+                    >
+                      <div class="trigger-content" v-if="receiverCountry">
+                        <img :src="`/flags/${receiverCountry.toLowerCase()}.png`" class="flag-img-select" alt="" />
+                        <span>{{ getCountryName(receiverCountry) }}</span>
+                      </div>
+                      <span v-else class="placeholder">Pilih Negara Tujuan</span>
+                      <ChevronDown :size="16" class="select-chevron" :class="{ 'rotated': isReceiverCountryDropdownOpen }" />
+                    </button>
+
+                    <div v-if="isReceiverCountryDropdownOpen" class="custom-options-container animate-fade-in" @click.stop>
+                      <div class="search-box-wrapper">
+                        <Search :size="14" class="search-icon" />
+                        <input
+                          type="text"
+                          v-model="searchQueryReceiver"
+                          placeholder="Cari negara..."
+                          class="dropdown-search-input"
+                          ref="receiverCountrySearchInput"
+                        />
+                      </div>
+                      <div class="options-list">
+                        <div
+                          v-for="country in filteredReceiverCountries"
+                          :key="'receiver-opt-' + country.code"
+                          class="custom-option"
+                          :class="{ 'is-selected': receiverCountry === country.code }"
+                          @click="selectReceiverCountry(country.code)"
+                        >
+                          <img :src="`/flags/${country.code.toLowerCase()}.png`" class="flag-img-option" alt="" />
+                          <span>{{ country.name }}</span>
+                        </div>
+                        <div v-if="filteredReceiverCountries.length === 0" class="no-options-found">
+                          Negara tidak ditemukan
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <span v-if="errors.receiverCity" class="error-msg">Negara tujuan wajib dipilih</span>
                 </div>
               </div>
 
@@ -219,7 +368,7 @@
                       class="form-field-input-badge" 
                       required
                     />
-                    <span class="input-badge-text">Kg</span>
+                    <span class="input-badge-text">{{ activeTab === 'domestik' ? 'Kg' : 'Gram' }}</span>
                   </div>
                 </div>
 
@@ -247,75 +396,45 @@
               <div class="services-radio-group-container mt-6">
                 <label class="field-input-label block-label">Pilih Layanan</label>
                 <div class="services-cards-grid">
-                  
-                  <!-- Card 1: Instant -->
-                  <div 
-                    class="service-radio-card" 
-                    :class="{ 'selected': selectedService === 'instant' }"
-                    @click="selectedService = 'instant'"
-                  >
-                    <div class="radio-card-header">
-                      <div class="custom-radio-circle">
-                        <div class="radio-dot"></div>
+                  <template v-if="activeTab === 'domestik'">
+                    <div 
+                      v-for="service in servicesDomestik"
+                      :key="service.id"
+                      class="service-radio-card" 
+                      :class="{ 'selected': selectedService === service.id }"
+                      @click="selectedService = service.id"
+                    >
+                      <div class="radio-card-header">
+                        <div class="custom-radio-circle">
+                          <div class="radio-dot"></div>
+                        </div>
+                        <img src="/kurir/domestik/jne.png" class="service-card-logo-img service-card-logo-img--jne" alt="JNE Express" />
                       </div>
-                      <Zap :size="18" class="service-card-icon text-orange" />
+                      <h3 class="service-card-title">{{ service.name }}</h3>
+                      <p class="service-card-eta">{{ service.eta }}</p>
+                      <span class="service-card-price">{{ formatPrice(calculateServiceCost(service.id, true)) }}</span>
                     </div>
-                    <h3 class="service-card-title">Instant Delivery</h3>
-                    <p class="service-card-eta">Sampai 2 - 4 Jam</p>
-                    <span class="service-card-price">Rp 45.000</span>
-                  </div>
+                  </template>
 
-                  <!-- Card 2: Same Day -->
-                  <div 
-                    class="service-radio-card" 
-                    :class="{ 'selected': selectedService === 'sameday' }"
-                    @click="selectedService = 'sameday'"
-                  >
-                    <div class="radio-card-header">
-                      <div class="custom-radio-circle">
-                        <div class="radio-dot"></div>
+                  <template v-else>
+                    <div 
+                      v-for="service in servicesInternasional"
+                      :key="service.id"
+                      class="service-radio-card" 
+                      :class="{ 'selected': selectedService === service.id }"
+                      @click="selectedService = service.id"
+                    >
+                      <div class="radio-card-header">
+                        <div class="custom-radio-circle">
+                          <div class="radio-dot"></div>
+                        </div>
+                        <img src="/kurir/internasional/fedex.png" class="service-card-logo-img service-card-logo-img--fedex" alt="FedEx Express" />
                       </div>
-                      <Clock :size="18" class="service-card-icon text-green" />
+                      <h3 class="service-card-title">{{ service.name }}</h3>
+                      <p class="service-card-eta">{{ service.eta }}</p>
+                      <span class="service-card-price">{{ formatPrice(calculateServiceCost(service.id, false)) }}</span>
                     </div>
-                    <h3 class="service-card-title">Same Day</h3>
-                    <p class="service-card-eta">Sampai Hari Ini</p>
-                    <span class="service-card-price">Rp 30.000</span>
-                  </div>
-
-                  <!-- Card 3: Next Day -->
-                  <div 
-                    class="service-radio-card" 
-                    :class="{ 'selected': selectedService === 'nextday' }"
-                    @click="selectedService = 'nextday'"
-                  >
-                    <div class="radio-card-header">
-                      <div class="custom-radio-circle">
-                        <div class="radio-dot"></div>
-                      </div>
-                      <Boxes :size="18" class="service-card-icon text-blue" />
-                    </div>
-                    <h3 class="service-card-title">Next Day</h3>
-                    <p class="service-card-eta">Sampai Besok</p>
-                    <span class="service-card-price">Rp 20.000</span>
-                  </div>
-
-                  <!-- Card 4: Cargo -->
-                  <div 
-                    class="service-radio-card" 
-                    :class="{ 'selected': selectedService === 'cargo' }"
-                    @click="selectedService = 'cargo'"
-                  >
-                    <div class="radio-card-header">
-                      <div class="custom-radio-circle">
-                        <div class="radio-dot"></div>
-                      </div>
-                      <Truck :size="18" class="service-card-icon text-purple" />
-                    </div>
-                    <h3 class="service-card-title">Cargo</h3>
-                    <p class="service-card-eta">2 - 5 Hari</p>
-                    <span class="service-card-price">Rp 15.000</span>
-                  </div>
-
+                  </template>
                 </div>
               </div>
             </div>
@@ -375,97 +494,110 @@
         <div class="sidebar-container-column">
           <div class="sticky-summary-sidebar">
             <h2 class="sidebar-title">Ringkasan Pengiriman</h2>
-            
-            <!-- Visual Route Timeline -->
-            <div class="summary-route-timeline">
-              <div class="timeline-point-row origin-point">
-                <div class="point-circle green-dot"></div>
-                <div class="point-label-block">
-                  <span class="point-city">{{ getCityName(senderCity, 'origin') }}</span>
-                  <span class="point-sublabel">Kota Asal</span>
-                </div>
-              </div>
-              <div class="timeline-connecting-dashed"></div>
-              <div class="timeline-point-row destination-point">
-                <div class="point-circle blue-pin">
-                  <MapPin :size="10" />
-                </div>
-                <div class="point-label-block">
-                  <span class="point-city">{{ getCityName(receiverCity, 'destination') }}</span>
-                  <span class="point-sublabel">Kota Tujuan</span>
-                </div>
-              </div>
+                       <!-- Placeholder when no route selected -->
+            <div v-if="!isRouteSelected" class="summary-placeholder-box">
+              <MapPin :size="24" class="placeholder-icon animate-bounce" />
+              <p>Tentukan lokasi asal dan tujuan untuk melihat ringkasan biaya</p>
             </div>
 
-            <!-- Specs List -->
-            <div class="summary-specs-list">
-              <div class="spec-row">
-                <span class="spec-label">Berat Paket</span>
-                <span class="spec-value">{{ packageWeight || 1 }} Kg</span>
+            <!-- Visual Route Timeline & Details Wrapper -->
+            <div class="summary-details-wrapper" :class="{ 'is-visible': isRouteSelected }">
+              <!-- Visual Route Timeline -->
+              <div class="summary-route-timeline">
+                <div class="timeline-point-row origin-point">
+                  <div class="point-circle green-dot"></div>
+                  <div class="point-label-block">
+                    <span class="point-city">{{ activeTab === 'domestik' ? getCityName(senderCity, 'origin') : getCountryName(senderCountry) }}</span>
+                    <span class="point-sublabel">{{ activeTab === 'domestik' ? 'Kota Asal' : 'Negara Asal' }}</span>
+                  </div>
+                </div>
+                <div class="timeline-connecting-dashed"></div>
+                <div class="timeline-point-row destination-point">
+                  <div class="point-circle blue-pin">
+                    <MapPin :size="10" />
+                  </div>
+                  <div class="point-label-block">
+                    <span class="point-city">{{ activeTab === 'domestik' ? getCityName(receiverCity, 'destination') : getCountryName(receiverCountry) }}</span>
+                    <span class="point-sublabel">{{ activeTab === 'domestik' ? 'Kota Tujuan' : 'Negara Tujuan' }}</span>
+                  </div>
+                </div>
               </div>
-              <div class="spec-row">
-                <span class="spec-label">Dimensi</span>
-                <span class="spec-value">{{ packageLength }} x {{ packageWidth }} x {{ packageHeight }} cm</span>
-              </div>
-              <div class="spec-row">
-                <span class="spec-label">Layanan</span>
-                <span class="spec-value">
-                  <span class="service-capsule-badge">{{ getServiceLabel }}</span>
-                </span>
-              </div>
-              <div class="spec-row">
-                <span class="spec-label">Estimasi Sampai</span>
-                <span class="spec-value">{{ getServiceEta }}</span>
-              </div>
-            </div>
 
-            <hr class="summary-divider" />
-
-            <!-- Cost Breakdown -->
-            <div class="summary-costs-breakdown">
-              <div class="cost-row">
-                <span class="cost-label">Ongkos Kirim</span>
-                <span class="cost-value">{{ formatPrice(calculatedOngkir) }}</span>
+              <!-- Specs List -->
+              <div class="summary-specs-list">
+                <div class="spec-row">
+                  <span class="spec-label">Berat Paket</span>
+                  <span class="spec-value">{{ packageWeight || (activeTab === 'domestik' ? 1 : 500) }} {{ activeTab === 'domestik' ? 'Kg' : 'Gram' }}</span>
+                </div>
+                <div class="spec-row">
+                  <span class="spec-label">Dimensi</span>
+                  <span class="spec-value">{{ packageLength }} x {{ packageWidth }} x {{ packageHeight }} cm</span>
+                </div>
+                <div class="spec-row">
+                  <span class="spec-label">Layanan</span>
+                  <span class="spec-value">
+                    <span class="service-capsule-badge">{{ getServiceLabel }}</span>
+                  </span>
+                </div>
+                <div class="spec-row">
+                  <span class="spec-label">Estimasi Sampai</span>
+                  <span class="spec-value">{{ getServiceEta }}</span>
+                </div>
               </div>
-              <div class="cost-row relative-tooltip">
-                <span class="cost-label flex-align">
-                  Asuransi 
-                  <span class="info-tooltip-trigger" @mouseenter="showTooltip = true" @mouseleave="showTooltip = false">
-                    <Info :size="13" class="info-trigger-icon" />
-                    <span v-if="showTooltip" class="tooltip-box">
-                      Asuransi paket untuk perlindungan penuh kerusakan/kehilangan hingga Rp 10.000.000.
+
+              <hr class="summary-divider" />
+
+              <!-- Cost Breakdown -->
+              <div class="summary-costs-breakdown">
+                <div class="cost-row">
+                  <span class="cost-label">Ongkos Kirim</span>
+                  <span class="cost-value">{{ formatPrice(calculatedOngkir) }}</span>
+                </div>
+                <div class="cost-row relative-tooltip">
+                  <span class="cost-label flex-align">
+                    Asuransi 
+                    <span class="info-tooltip-trigger" @mouseenter="showTooltip = true" @mouseleave="showTooltip = false">
+                      <Info :size="13" class="info-trigger-icon" />
+                      <span v-if="showTooltip" class="tooltip-box">
+                        Asuransi paket untuk perlindungan penuh kerusakan/kehilangan hingga Rp 10.000.000.
+                      </span>
                     </span>
                   </span>
-                </span>
-                <span class="cost-value">Rp 1.000</span>
+                  <span class="cost-value">Rp 1.000</span>
+                </div>
+                <div class="cost-row">
+                  <span class="cost-label">Biaya Admin</span>
+                  <span class="cost-value">Rp 1.000</span>
+                </div>
               </div>
-              <div class="cost-row">
-                <span class="cost-label">Biaya Admin</span>
-                <span class="cost-value">Rp 1.000</span>
+
+              <hr class="summary-divider" />
+
+              <!-- Total Row -->
+              <div class="summary-total-row">
+                <span class="total-label">Total</span>
+                <span class="total-value">{{ formatPrice(calculatedTotal) }}</span>
               </div>
-            </div>
 
-            <hr class="summary-divider" />
-
-            <!-- Total Row -->
-            <div class="summary-total-row">
-              <span class="total-label">Total</span>
-              <span class="total-value">{{ formatPrice(calculatedTotal) }}</span>
-            </div>
-
-            <!-- Insurance Trust Banner -->
-            <div class="insurance-banner-blue">
-              <ShieldCheck :size="20" class="insurance-banner-icon" />
-              <div class="insurance-banner-text">
-                <strong>Keamanan Terjamin</strong> - Setiap pengiriman Anda diasuransikan hingga 100%.
+              <!-- Insurance Trust Banner -->
+              <div class="insurance-banner-blue">
+                <ShieldCheck :size="20" class="insurance-banner-icon" />
+                <div class="insurance-banner-text">
+                  <strong>Keamanan Terjamin</strong> - Setiap pengiriman Anda diasuransikan hingga 100%.
+                </div>
               </div>
             </div>
 
             <!-- Submit Button -->
-            <button @click="validateAndSubmit" class="btn btn-primary btn-submit-payment-cta">
+            <!-- <button 
+              @click="validateAndSubmit" 
+              :disabled="!isRouteSelected"
+              class="btn btn-primary btn-submit-payment-cta"
+              :class="{ 'btn-disabled': !isRouteSelected }"
+            >
               Lanjutkan Pembayaran
               <ArrowRight :size="16" />
-            </button>
+            </button> -->
 
             <!-- Security note -->
             <div class="security-lock-note">
@@ -562,7 +694,12 @@
           <ShieldCheck :size="16" class="watermark-icon" />
           <span class="watermark-text">Proses ini diawasi oleh <strong class="brand-kolektix">Kolektix</strong></span>
         </div>
-        <button @click="validateAndSubmit" class="btn btn-primary bottom-bar-btn">
+        <button 
+          @click="validateAndSubmit" 
+          :disabled="!isRouteSelected"
+          class="btn btn-primary bottom-bar-btn"
+          :class="{ 'btn-disabled': !isRouteSelected }"
+        >
           Lanjutkan Pembayaran
           <ArrowRight :size="15" />
         </button>
@@ -573,8 +710,8 @@
 </template>
 
 <script>
-import { ref, computed } from 'vue';
-import { User, Package, Calendar, Zap, Clock, Boxes, Truck, MapPin, ShieldCheck, Lock, Info, CheckCircle, ArrowRight } from '@lucide/vue';
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
+import { User, Package, Calendar, MapPin, ShieldCheck, Lock, Info, CheckCircle, ArrowRight, Globe, ChevronDown, Search, Minus, Plus } from '@lucide/vue';
 
 export default {
   name: 'ShippingForm',
@@ -582,22 +719,26 @@ export default {
     User,
     Package,
     Calendar,
-    Zap,
-    Clock,
-    Boxes,
-    Truck,
     MapPin,
     ShieldCheck,
     Lock,
     Info,
     CheckCircle,
-    ArrowRight
+    ArrowRight,
+    Globe,
+    ChevronDown,
+    Search,
+    Minus,
+    Plus
   },
   setup() {
     // Current active stepper step (1, 2, 3, 4)
     const activeStep = ref(1);
     const showTooltip = ref(false);
     const bookingCode = ref('');
+
+    // Tab state: 'domestik' or 'internasional'
+    const activeTab = ref('domestik');
 
     // List of steps for header stepper tracking
     const steps = [
@@ -607,36 +748,160 @@ export default {
       { number: 4, label: 'Konfirmasi' }
     ];
 
-    // List of cities matching home calculator
-    const cities = [
-      { name: 'Jakarta (DKI Jakarta)', value: 'jakarta' },
-      { name: 'Bandung (Jawa Barat)', value: 'bandung' },
-      { name: 'Surabaya (Jawa Timur)', value: 'surabaya' },
-      { name: 'Medan (Sumatera Utara)', value: 'medan' },
-      { name: 'Makassar (Sulawesi Selatan)', value: 'makassar' },
-      { name: 'Yogyakarta (DIY Yogyakarta)', value: 'yogyakarta' }
+    // List of regions for autocomplete lookup
+    const regions = [
+      // Jakarta
+      { subdistrict: 'Rawasari', district: 'Cempaka Putih', city: 'Jakarta Pusat', zip: '10550', value: 'rawasari' },
+      { subdistrict: 'Selong', district: 'Kebayoran Baru', city: 'Jakarta Selatan', zip: '12110', value: 'selong' },
+      { subdistrict: 'Senayan', district: 'Kebayoran Baru', city: 'Jakarta Selatan', zip: '12190', value: 'senayan' },
+      { subdistrict: 'Menteng', district: 'Menteng', city: 'Jakarta Pusat', zip: '10310', value: 'menteng' },
+      { subdistrict: 'Gambir', district: 'Gambir', city: 'Jakarta Pusat', zip: '10110', value: 'gambir' },
+      { subdistrict: 'Kelapa Gading Barat', district: 'Kelapa Gading', city: 'Jakarta Utara', zip: '14240', value: 'kelapa-gading' },
+      // Bandung
+      { subdistrict: 'Dago', district: 'Coblong', city: 'Bandung', zip: '40135', value: 'dago' },
+      { subdistrict: 'Sarijadi', district: 'Sukasari', city: 'Bandung', zip: '40151', value: 'sarijadi' },
+      { subdistrict: 'Pasirkaliki', district: 'Cicendo', city: 'Bandung', zip: '40171', value: 'pasirkaliki' },
+      // Surabaya
+      { subdistrict: 'Gubeng', district: 'Gubeng', city: 'Surabaya', zip: '60281', value: 'gubeng' },
+      { subdistrict: 'Keputih', district: 'Sukolilo', city: 'Surabaya', zip: '60111', value: 'keputih' },
+      { subdistrict: 'Tegalsari', district: 'Tegalsari', city: 'Surabaya', zip: '60262', value: 'tegalsari' },
+      // Yogyakarta
+      { subdistrict: 'Klitren', district: 'Gondokusuman', city: 'Yogyakarta', zip: '55222', value: 'klitren' },
+      { subdistrict: 'Sosromenduran', district: 'Gedongtengen', city: 'Yogyakarta', zip: '55271', value: 'sosromenduran' },
+      // Semarang
+      { subdistrict: 'Sekaran', district: 'Gunungpati', city: 'Semarang', zip: '50229', value: 'sekaran' },
+      { subdistrict: 'Mugasari', district: 'Semarang Selatan', city: 'Semarang', zip: '50249', value: 'mugasari' },
+      // Medan
+      { subdistrict: 'Kesawan', district: 'Medan Barat', city: 'Medan', zip: '20111', value: 'kesawan' },
+      { subdistrict: 'Babura', district: 'Medan Baru', city: 'Medan', zip: '20152', value: 'babura' },
+      // Makassar
+      { subdistrict: 'Malimongan Baru', district: 'Bontoala', city: 'Makassar', zip: '90151', value: 'malimongan' },
+      { subdistrict: 'Losari', district: 'Ujung Pandang', city: 'Makassar', zip: '90111', value: 'losari' },
+      // Denpasar
+      { subdistrict: 'Sanur', district: 'Denpasar Selatan', city: 'Denpasar', zip: '80228', value: 'sanur' },
+      { subdistrict: 'Renon', district: 'Denpasar Selatan', city: 'Renon', zip: '80226', value: 'renon' },
+      // Palembang
+      { subdistrict: 'Talang Semut', district: 'Bukit Kecil', city: 'Palembang', zip: '30135', value: 'talang-semut' },
+      // Balikpapan
+      { subdistrict: 'Klandasan Ulu', district: 'Balikpapan Kota', city: 'Balikpapan', zip: '76112', value: 'klandasan' }
     ];
+
+    // List of countries for international dropdown selection
+    const countries = [
+      { code: 'ID', name: 'Indonesia', flag: '🇮🇩' },
+      { code: 'SG', name: 'Singapura', flag: '🇸🇬' },
+      { code: 'MY', name: 'Malaysia', flag: '🇲🇾' },
+      { code: 'TH', name: 'Thailand', flag: '🇹🇭' },
+      { code: 'PH', name: 'Filipina', flag: '🇵🇭' },
+      { code: 'VN', name: 'Vietnam', flag: '🇻🇳' },
+      { code: 'MM', name: 'Myanmar', flag: '🇲🇲' },
+      { code: 'KH', name: 'Kamboja', flag: '🇰🇭' },
+      { code: 'JP', name: 'Jepang', flag: '🇯🇵' },
+      { code: 'CN', name: 'Cina', flag: '🇨🇳' },
+      { code: 'KR', name: 'Korea Selatan', flag: '🇰🇷' },
+      { code: 'HK', name: 'Hong Kong', flag: '🇭🇰' },
+      { code: 'TW', name: 'Taiwan', flag: '🇹🇼' },
+      { code: 'AU', name: 'Australia', flag: '🇦🇺' },
+      { code: 'NZ', name: 'Selandia Baru', flag: '🇳🇿' },
+      { code: 'IN', name: 'India', flag: '🇮🇳' },
+      { code: 'SA', name: 'Arab Saudi', flag: '🇸🇦' },
+      { code: 'AE', name: 'Uni Emirat Arab', flag: '🇦🇪' },
+      { code: 'US', name: 'Amerika Serikat', flag: '🇺🇸' },
+      { code: 'GB', name: 'Inggris', flag: '🇬🇧' },
+      { code: 'DE', name: 'Jerman', flag: '🇩🇪' },
+      { code: 'FR', name: 'Prancis', flag: '🇫🇷' },
+    ];
+
+    const servicesDomestik = [
+      {
+        id: 'instant',
+        name: 'Instant Delivery',
+        subtext: 'Sampai di hari yang sama',
+        basePrice: 85000,
+        eta: 'Hari ini (3-6 jam)'
+      },
+      {
+        id: 'sameday',
+        name: 'Same Day Delivery',
+        subtext: 'Sampai di hari yang sama',
+        basePrice: 45000,
+        eta: 'Hari ini (6-10 jam)'
+      },
+      {
+        id: 'nextday',
+        name: 'Next Day Delivery',
+        subtext: 'Sampai 1 hari kerja',
+        basePrice: 25000,
+        eta: 'Besok (1 hari)'
+      },
+      {
+        id: 'cargo',
+        name: 'Cargo / Reguler',
+        subtext: 'Sampai 2-3 hari kerja',
+        basePrice: 18000,
+        eta: '2-3 hari'
+      }
+    ];
+
+    const servicesInternasional = [
+      {
+        id: 'intl-express',
+        name: 'International Express',
+        subtext: 'Pengiriman internasional prioritas',
+        basePrice: 250000,
+        eta: '3-5 hari kerja'
+      },
+      {
+        id: 'intl-standard',
+        name: 'International Standard',
+        subtext: 'Pengiriman internasional standar',
+        basePrice: 150000,
+        eta: '7-14 hari kerja'
+      },
+      {
+        id: 'intl-economy',
+        name: 'International Economy',
+        subtext: 'Pengiriman ekonomi internasional',
+        basePrice: 90000,
+        eta: '14-21 hari kerja'
+      }
+    ];
+
 
     // Form inputs state
     const senderName = ref('');
     const senderPhone = ref('');
-    const senderCity = ref('jakarta'); // Default Jakarta
+    const senderCity = ref(''); // Start empty
+    const originSearchQuery = ref(''); // Start empty
+    const isOriginFocused = ref(false);
     const senderAddress = ref('');
 
     const receiverName = ref('');
     const receiverPhone = ref('');
-    const receiverCity = ref('bandung'); // Default Bandung
+    const receiverCity = ref(''); // Start empty
+    const destSearchQuery = ref(''); // Start empty
+    const isDestFocused = ref(false);
     const receiverAddress = ref('');
 
-    const packageType = ref('');
-    const packageWeight = ref(1); // Default 1
-    const packageLength = ref(20); // Default 20
-    const packageWidth = ref(15); // Default 15
-    const packageHeight = ref(10); // Default 10
-    const selectedService = ref('instant'); // Default Instant Delivery
+    // International Country states
+    const senderCountry = ref(''); // Start empty
+    const receiverCountry = ref(''); // Start empty
+    const isSenderCountryDropdownOpen = ref(false);
+    const isReceiverCountryDropdownOpen = ref(false);
+    const searchQuerySender = ref('');
+    const searchQueryReceiver = ref('');
+    const senderCountrySearchInput = ref(null);
+    const receiverCountrySearchInput = ref(null);
 
-    const pickupDate = ref('22 Juni 2026'); // Default value from prompt
-    const pickupTime = ref('14:00 - 16:00'); // Default value from prompt
+    const packageType = ref('');
+    const packageWeight = ref(1); // Default weight value (1 for Domestik, updated to 500 for Intl)
+    const packageLength = ref(20);
+    const packageWidth = ref(15);
+    const packageHeight = ref(10);
+    const selectedService = ref('instant');
+
+    const pickupDate = ref('22 Juni 2026');
+    const pickupTime = ref('14:00 - 16:00');
     const courierNotes = ref('');
 
     // Error messages tracking
@@ -651,16 +916,45 @@ export default {
       receiverAddress: false
     });
 
-    // Helper: translate city values to short name
-    const getCityName = (cityVal, type) => {
-      const city = cities.find(c => c.value === cityVal);
-      if (city) {
-        return city.name.split(' ')[0];
-      }
-      return type === 'origin' ? 'Jakarta' : 'Bandung';
+    // ── Helper functions ──────────────────────────────
+    const getRegionLabel = (region) => {
+      return `${region.subdistrict}, ${region.district}, ${region.city} (${region.zip})`;
     };
 
-    // Helper: Format price to IDR Rupiah
+    const getCityName = (cityVal, type) => {
+      if (!cityVal) return '';
+      if (activeTab.value === 'domestik') {
+        const region = regions.find(r => r.value === cityVal);
+        if (region) {
+          return region.subdistrict;
+        }
+        return '';
+      } else {
+        const countryVal = type === 'origin' ? senderCountry.value : receiverCountry.value;
+        if (!countryVal) return '';
+        const country = countries.find(c => c.code === countryVal);
+        return country ? country.name : '';
+      }
+    };
+
+    const getCityKey = (cityVal) => {
+      const region = regions.find(r => r.value === cityVal);
+      if (!region) return '';
+      const name = region.city.toLowerCase();
+      if (name.includes('jakarta')) return 'jakarta';
+      if (name.includes('bandung')) return 'bandung';
+      if (name.includes('surabaya')) return 'surabaya';
+      if (name.includes('medan')) return 'medan';
+      if (name.includes('makassar')) return 'makassar';
+      if (name.includes('yogyakarta')) return 'yogyakarta';
+      return name;
+    };
+
+    const getCountryName = (code) => {
+      const c = countries.find(c => c.code === code);
+      return c ? c.name : '';
+    };
+
     const formatPrice = (val) => {
       return new Intl.NumberFormat('id-ID', {
         style: 'currency',
@@ -670,63 +964,284 @@ export default {
       }).format(val);
     };
 
-    // Interactive Service Labels
+    // ── Tab controls ──────────────────────────────
+    const switchTab = (tab) => {
+      activeTab.value = tab;
+      if (tab === 'domestik') {
+        packageWeight.value = 1;
+        selectedService.value = 'instant';
+        senderCity.value = '';
+        originSearchQuery.value = '';
+        receiverCity.value = '';
+        destSearchQuery.value = '';
+      } else {
+        packageWeight.value = 500;
+        selectedService.value = 'intl-express';
+        senderCountry.value = '';
+        receiverCountry.value = '';
+      }
+      isSenderCountryDropdownOpen.value = false;
+      isReceiverCountryDropdownOpen.value = false;
+      isOriginFocused.value = false;
+      isDestFocused.value = false;
+    };
+
+    // ── Domestic Autocomplete Actions ──────────────────────
+    const selectOriginRegion = (region) => {
+      senderCity.value = region.value;
+      originSearchQuery.value = getRegionLabel(region);
+      isOriginFocused.value = false;
+    };
+
+    const selectDestRegion = (region) => {
+      receiverCity.value = region.value;
+      destSearchQuery.value = getRegionLabel(region);
+      isDestFocused.value = false;
+    };
+
+    const handleOriginBlur = () => {
+      setTimeout(() => {
+        isOriginFocused.value = false;
+      }, 200);
+    };
+
+    const handleDestBlur = () => {
+      setTimeout(() => {
+        isDestFocused.value = false;
+      }, 200);
+    };
+
+    const filteredOriginRegions = computed(() => {
+      const q = originSearchQuery.value.trim().toLowerCase();
+      if (!q) return [];
+      return regions.filter(r => 
+        r.subdistrict.toLowerCase().includes(q) ||
+        r.district.toLowerCase().includes(q) ||
+        r.city.toLowerCase().includes(q) ||
+        r.zip.includes(q)
+      ).slice(0, 5);
+    });
+
+    const filteredDestRegions = computed(() => {
+      const q = destSearchQuery.value.trim().toLowerCase();
+      if (!q) return [];
+      return regions.filter(r => 
+        r.subdistrict.toLowerCase().includes(q) ||
+        r.district.toLowerCase().includes(q) ||
+        r.city.toLowerCase().includes(q) ||
+        r.zip.includes(q)
+      ).slice(0, 5);
+    });
+
+    // ── Country Dropdowns Actions ──────────────────────
+    const toggleSenderCountryDropdown = () => {
+      isSenderCountryDropdownOpen.value = !isSenderCountryDropdownOpen.value;
+      isReceiverCountryDropdownOpen.value = false;
+      if (isSenderCountryDropdownOpen.value) {
+        searchQuerySender.value = '';
+        nextTick(() => {
+          if (senderCountrySearchInput.value) senderCountrySearchInput.value.focus();
+        });
+      }
+    };
+
+    const toggleReceiverCountryDropdown = () => {
+      isReceiverCountryDropdownOpen.value = !isReceiverCountryDropdownOpen.value;
+      isSenderCountryDropdownOpen.value = false;
+      if (isReceiverCountryDropdownOpen.value) {
+        searchQueryReceiver.value = '';
+        nextTick(() => {
+          if (receiverCountrySearchInput.value) receiverCountrySearchInput.value.focus();
+        });
+      }
+    };
+
+    const selectSenderCountry = (code) => {
+      senderCountry.value = code;
+      isSenderCountryDropdownOpen.value = false;
+    };
+
+    const selectReceiverCountry = (code) => {
+      receiverCountry.value = code;
+      isReceiverCountryDropdownOpen.value = false;
+    };
+
+    const filteredSenderCountries = computed(() => {
+      if (!searchQuerySender.value) return countries;
+      return countries.filter(c => 
+        c.name.toLowerCase().includes(searchQuerySender.value.toLowerCase()) ||
+        c.code.toLowerCase().includes(searchQuerySender.value.toLowerCase())
+      );
+    });
+
+    const filteredReceiverCountries = computed(() => {
+      if (!searchQueryReceiver.value) return countries;
+      return countries.filter(c => 
+        c.name.toLowerCase().includes(searchQueryReceiver.value.toLowerCase()) ||
+        c.code.toLowerCase().includes(searchQueryReceiver.value.toLowerCase())
+      );
+    });
+
+    const handleOutsideClick = (e) => {
+      if (!e.target.closest('.custom-select-container')) {
+        isSenderCountryDropdownOpen.value = false;
+        isReceiverCountryDropdownOpen.value = false;
+      }
+    };
+
+    // ── Autocomplete Search Query Watchers ──────────────
+    watch(originSearchQuery, (newVal) => {
+      const selected = regions.find(r => r.value === senderCity.value);
+      if (selected && newVal === getRegionLabel(selected)) {
+        return; // Already selected
+      }
+
+      // Check for 5-digit zip code
+      const zipMatch = newVal.trim();
+      if (/^\d{5}$/.test(zipMatch)) {
+        const found = regions.find(r => r.zip === zipMatch);
+        if (found) {
+          selectOriginRegion(found);
+          return;
+        }
+      }
+
+      if (!selected || newVal !== getRegionLabel(selected)) {
+        senderCity.value = '';
+      }
+    });
+
+    watch(destSearchQuery, (newVal) => {
+      const selected = regions.find(r => r.value === receiverCity.value);
+      if (selected && newVal === getRegionLabel(selected)) {
+        return; // Already selected
+      }
+
+      // Check for 5-digit zip code
+      const zipMatch = newVal.trim();
+      if (/^\d{5}$/.test(zipMatch)) {
+        const found = regions.find(r => r.zip === zipMatch);
+        if (found) {
+          selectDestRegion(found);
+          return;
+        }
+      }
+
+      if (!selected || newVal !== getRegionLabel(selected)) {
+        receiverCity.value = '';
+      }
+    });
+
+    onMounted(() => {
+      document.addEventListener('click', handleOutsideClick);
+    });
+
+    onUnmounted(() => {
+      document.removeEventListener('click', handleOutsideClick);
+    });
+
+    // ── Service Cost Calculation ───────────────────────────
+    const calculateServiceCost = (serviceId, isDomestik) => {
+      if (isDomestik) {
+        const service = servicesDomestik.find(s => s.id === serviceId);
+        if (!service) return 0;
+
+        let distanceMultiplier = 1.0;
+        if (senderCity.value && receiverCity.value) {
+          if (senderCity.value !== receiverCity.value) {
+            const charDiff = Math.abs(senderCity.value.charCodeAt(0) - receiverCity.value.charCodeAt(0));
+            distanceMultiplier = 1.0 + (charDiff * 0.08);
+          } else {
+            distanceMultiplier = 0.55;
+          }
+        }
+
+        const weightKg = packageWeight.value || 1;
+        let weightMultiplier = weightKg;
+        if (serviceId === 'cargo' && weightKg >= 10) {
+          weightMultiplier = weightKg * 0.75;
+        }
+
+        let finalCost = service.basePrice * distanceMultiplier * weightMultiplier;
+
+        // Specially handle Jakarta-Bandung 1kg fallback just like CekTarif
+        const isJktBdg = (senderCity.value === 'rawasari' || getCityKey(senderCity.value) === 'jakarta') && 
+                         (receiverCity.value === 'dago' || getCityKey(receiverCity.value) === 'bandung');
+        const isBdgJkt = (senderCity.value === 'dago' || getCityKey(senderCity.value) === 'bandung') && 
+                         (receiverCity.value === 'rawasari' || getCityKey(receiverCity.value) === 'jakarta');
+
+        if ((isJktBdg || isBdgJkt) && weightKg === 1) {
+          finalCost = service.basePrice;
+        } else {
+          finalCost = Math.round(finalCost / 500) * 500;
+        }
+        return finalCost;
+      } else {
+        const service = servicesInternasional.find(s => s.id === serviceId);
+        if (!service) return 0;
+
+        const weightKg = (packageWeight.value || 500) / 1000;
+        const dest = receiverCountry.value || 'SG';
+        const isRegional = ['SG', 'MY', 'TH', 'PH', 'VN', 'MM', 'KH'].includes(dest);
+        const regionMultiplier = isRegional ? 1.0 : 2.5;
+
+        let finalCost = Math.round((service.basePrice * weightKg * regionMultiplier) / 500) * 500;
+        if (finalCost < service.basePrice) finalCost = service.basePrice;
+        return finalCost;
+      }
+    };
+
+    // ── Computed Order Specs ──────────────────────────────
     const getServiceLabel = computed(() => {
       const labels = {
         instant: 'Instant Delivery',
-        sameday: 'Same Day',
-        nextday: 'Next Day',
-        cargo: 'Cargo'
+        sameday: 'Same Day Delivery',
+        nextday: 'Next Day Delivery',
+        cargo: 'Cargo / Reguler',
+        'intl-express': 'International Express',
+        'intl-standard': 'International Standard',
+        'intl-economy': 'International Economy'
       };
       return labels[selectedService.value] || 'Instant Delivery';
     });
 
     const getServiceEta = computed(() => {
       const etas = {
-        instant: '2 - 4 Jam',
-        sameday: 'Sampai Hari Ini',
-        nextday: 'Sampai Besok',
-        cargo: '2 - 5 Hari'
+        instant: 'Hari ini (3-6 jam)',
+        sameday: 'Hari ini (6-10 jam)',
+        nextday: 'Besok (1 hari)',
+        cargo: '2-3 hari',
+        'intl-express': '3-5 hari kerja',
+        'intl-standard': '7-14 hari kerja',
+        'intl-economy': '14-21 hari kerja'
       };
-      return etas[selectedService.value] || '2 - 4 Jam';
+      return etas[selectedService.value] || 'Hari ini (3-6 jam)';
     });
 
     // Dynamic cost calculations
     const calculatedOngkir = computed(() => {
-      let base = 45000;
-      if (selectedService.value === 'instant') base = 45000;
-      else if (selectedService.value === 'sameday') base = 30000;
-      else if (selectedService.value === 'nextday') base = 20000;
-      else if (selectedService.value === 'cargo') base = 15000;
-
-      let weight = packageWeight.value || 1;
-      let cost = base * weight;
-
-      // Add extra multiplier fee if cities are different
-      if (senderCity.value && receiverCity.value && senderCity.value !== receiverCity.value) {
-        const cityPairs = {
-          'jakarta-bandung': 0,
-          'bandung-jakarta': 0,
-          'jakarta-surabaya': 15000,
-          'jakarta-medan': 40000,
-          'jakarta-makassar': 55000,
-          'jakarta-yogyakarta': 10000,
-          'bandung-surabaya': 15000,
-          'bandung-yogyakarta': 10000
-        };
-        const key = `${senderCity.value}-${receiverCity.value}`;
-        const keyAlt = `${receiverCity.value}-${senderCity.value}`;
-        const extra = cityPairs[key] !== undefined ? cityPairs[key] : (cityPairs[keyAlt] !== undefined ? cityPairs[keyAlt] : 25000);
-        cost += extra * weight;
+      if (activeTab.value === 'domestik') {
+        if (!senderCity.value || !receiverCity.value) return 0;
+      } else {
+        if (!senderCountry.value || !receiverCountry.value) return 0;
       }
-      return cost;
+      return calculateServiceCost(selectedService.value, activeTab.value === 'domestik');
     });
 
     const calculatedTotal = computed(() => {
+      if (calculatedOngkir.value === 0) return 0;
       return calculatedOngkir.value + 1000 + 1000; // base + admin (1k) + insurance (1k)
     });
 
-    // Generate random booking code on final confirmation
+    const isRouteSelected = computed(() => {
+      if (activeTab.value === 'domestik') {
+        return !!senderCity.value && !!receiverCity.value;
+      } else {
+        return !!senderCountry.value && !!receiverCountry.value;
+      }
+    });
+
+    // Generate booking code
     const generateBookingCode = () => {
       const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
       let code = 'KMY-';
@@ -745,26 +1260,39 @@ export default {
 
       if (!senderName.value.trim()) { errors.value.senderName = true; isValid = false; }
       if (!senderPhone.value.trim() || senderPhone.value.length < 9) { errors.value.senderPhone = true; isValid = false; }
-      if (!senderCity.value) { errors.value.senderCity = true; isValid = false; }
+      
+      if (activeTab.value === 'domestik') {
+        if (!senderCity.value) { errors.value.senderCity = true; isValid = false; }
+      } else {
+        if (!senderCountry.value) { errors.value.senderCity = true; isValid = false; }
+      }
+      
       if (!senderAddress.value.trim()) { errors.value.senderAddress = true; isValid = false; }
 
       if (!receiverName.value.trim()) { errors.value.receiverName = true; isValid = false; }
       if (!receiverPhone.value.trim() || receiverPhone.value.length < 9) { errors.value.receiverPhone = true; isValid = false; }
-      if (!receiverCity.value) { errors.value.receiverCity = true; isValid = false; }
+      
+      if (activeTab.value === 'domestik') {
+        if (!receiverCity.value) { errors.value.receiverCity = true; isValid = false; }
+      } else {
+        if (!receiverCountry.value) { errors.value.receiverCity = true; isValid = false; }
+      }
+      
       if (!receiverAddress.value.trim()) { errors.value.receiverAddress = true; isValid = false; }
 
       if (!isValid) {
         // Highlight active step as 1 if details are missing
         activeStep.value = 1;
         // Scroll to the first error
-        const firstError = document.querySelector('.field-error');
-        if (firstError) {
-          firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
+        nextTick(() => {
+          const firstError = document.querySelector('.field-error');
+          if (firstError) {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        });
         return;
       }
 
-      // If valid, generate booking code and transition to step 4
       generateBookingCode();
       activeStep.value = 4;
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -772,13 +1300,11 @@ export default {
 
     // Stepper navigation helper
     const goToStep = (stepNum) => {
-      // Don't let users click Step 4 unless form is valid
       if (stepNum === 4) {
         validateAndSubmit();
       } else {
         activeStep.value = stepNum;
         
-        // Scroll to the respective section
         const mappings = {
           1: '#section-sender',
           2: '#section-package',
@@ -795,11 +1321,13 @@ export default {
     const resetForm = () => {
       senderName.value = '';
       senderPhone.value = '';
-      senderCity.value = 'jakarta';
+      senderCity.value = 'rawasari';
+      originSearchQuery.value = 'Rawasari, Cempaka Putih, Jakarta Pusat (10550)';
       senderAddress.value = '';
       receiverName.value = '';
       receiverPhone.value = '';
-      receiverCity.value = 'bandung';
+      receiverCity.value = 'dago';
+      destSearchQuery.value = 'Dago, Coblong, Bandung (40135)';
       receiverAddress.value = '';
       packageType.value = '';
       packageWeight.value = 1;
@@ -810,7 +1338,10 @@ export default {
       pickupDate.value = '22 Juni 2026';
       pickupTime.value = '14:00 - 16:00';
       courierNotes.value = '';
+      senderCountry.value = 'ID';
+      receiverCountry.value = 'SG';
       
+      activeTab.value = 'domestik';
       activeStep.value = 1;
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -818,17 +1349,35 @@ export default {
     return {
       activeStep,
       steps,
-      cities,
+      regions,
+      countries,
       showTooltip,
       bookingCode,
+      servicesDomestik,
+      servicesInternasional,
+      calculateServiceCost,
+      activeTab,
+      isRouteSelected,
       senderName,
       senderPhone,
       senderCity,
+      originSearchQuery,
+      isOriginFocused,
       senderAddress,
       receiverName,
       receiverPhone,
       receiverCity,
+      destSearchQuery,
+      isDestFocused,
       receiverAddress,
+      senderCountry,
+      receiverCountry,
+      isSenderCountryDropdownOpen,
+      isReceiverCountryDropdownOpen,
+      searchQuerySender,
+      searchQueryReceiver,
+      senderCountrySearchInput,
+      receiverCountrySearchInput,
       packageType,
       packageWeight,
       packageLength,
@@ -840,7 +1389,21 @@ export default {
       courierNotes,
       errors,
       getCityName,
+      getCountryName,
       formatPrice,
+      switchTab,
+      selectOriginRegion,
+      selectDestRegion,
+      handleOriginBlur,
+      handleDestBlur,
+      filteredOriginRegions,
+      filteredDestRegions,
+      toggleSenderCountryDropdown,
+      toggleReceiverCountryDropdown,
+      selectSenderCountry,
+      selectReceiverCountry,
+      filteredSenderCountries,
+      filteredReceiverCountries,
       getServiceLabel,
       getServiceEta,
       calculatedOngkir,
@@ -1306,21 +1869,20 @@ export default {
   background-color: var(--primary);
 }
 
-.service-card-icon {
-  padding: 4px;
-  background-color: var(--bg-light);
-  border-radius: 6px;
-  box-sizing: content-box;
+.service-card-logo-img {
+  height: 36px;
+  max-width: 95px;
+  object-fit: contain;
+  display: block;
 }
 
-.service-radio-card.selected .service-card-icon {
-  background-color: white;
+.service-card-logo-img--jne {
+  max-width: 80px;
 }
 
-.text-orange { color: #f97316; }
-.text-green { color: #22c55e; }
-.text-blue { color: #0a65ff; }
-.text-purple { color: #8b5cf6; }
+.service-card-logo-img--fedex {
+  max-width: 85px;
+}
 
 .service-card-title {
   font-size: 14px;
@@ -1973,5 +2535,317 @@ export default {
     width: 14px;
     height: 14px;
   }
+}
+
+/* ============================
+   TAB SWITCHER
+   ============================ */
+.tab-switcher {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 24px;
+  background-color: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  margin-bottom: 8px;
+  box-shadow: var(--shadow-sm);
+}
+
+.tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 14px 20px 16px 20px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  color: var(--text-light);
+  background: transparent;
+  border: none;
+  border-bottom: 2.5px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+  white-space: nowrap;
+}
+
+.tab-btn:hover {
+  color: var(--primary);
+}
+
+.tab-btn--active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.tab-icon {
+  stroke-width: 2;
+}
+
+/* ============================
+   Custom dropdowns (Internasional) & Autocomplete (Domestik)
+   ============================ */
+.custom-select-container {
+  position: relative;
+  width: 100%;
+}
+
+.custom-select-trigger {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background-color: #ffffff;
+  font-size: 15px;
+  color: var(--text-dark);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  height: 48px;
+  box-sizing: border-box;
+}
+
+.custom-select-trigger:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(10, 101, 255, 0.1);
+  outline: none;
+}
+
+.trigger-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.flag-img-select {
+  width: 20px;
+  height: 14px;
+  object-fit: cover;
+  border-radius: 2px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  display: block;
+}
+
+.placeholder {
+  color: #a0aec0;
+}
+
+.select-chevron {
+  color: var(--text-light);
+  transition: transform var(--transition-fast);
+  margin-left: auto;
+}
+
+.select-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+.custom-options-container {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 100%;
+  background-color: white;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  z-index: 100;
+  max-height: 280px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.search-box-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: white;
+}
+
+.search-icon {
+  color: var(--text-light);
+  flex-shrink: 0;
+}
+
+.dropdown-search-input {
+  width: 100%;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dark);
+  outline: none;
+}
+
+.options-list {
+  overflow-y: auto;
+  max-height: 220px;
+  background-color: white;
+}
+
+.custom-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-dark);
+  text-align: left;
+}
+
+.custom-option:hover {
+  background-color: var(--primary-light);
+  color: var(--primary);
+}
+
+.custom-option.is-selected {
+  background-color: var(--primary);
+  color: white;
+}
+
+.flag-img-option {
+  width: 20px;
+  height: 14px;
+  object-fit: cover;
+  border-radius: 2px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  display: block;
+}
+
+.no-options-found {
+  padding: 14px 16px;
+  font-size: 13px;
+  color: var(--text-light);
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Autocomplete Dropdown (Domestik) */
+.autocomplete-input {
+  cursor: text;
+}
+
+.autocomplete-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 100%;
+  background-color: white;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  z-index: 100;
+  max-height: 250px;
+  overflow-y: auto;
+  padding: 6px 0;
+}
+
+.autocomplete-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  text-align: left;
+}
+
+.autocomplete-item:hover {
+  background-color: var(--primary-light);
+}
+
+.dropdown-pin-icon {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.region-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.35;
+}
+
+.region-main {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.region-sub {
+  font-size: 11px;
+  color: var(--text-light);
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .tab-switcher {
+    padding: 0 16px;
+  }
+  .tab-btn {
+    padding: 12px 14px 14px 14px;
+    font-size: 14px;
+  }
+}
+
+/* ============================
+   Order Summary Details & Placeholder transitions
+   ============================ */
+.summary-placeholder-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 32px 16px;
+  border: 1.5px dashed var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-light);
+  background-color: var(--bg-light);
+  margin-bottom: 20px;
+  transition: all 0.4s ease;
+}
+
+.placeholder-icon {
+  color: var(--text-light);
+  margin-bottom: 12px;
+  opacity: 0.6;
+}
+
+.summary-placeholder-box p {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.summary-details-wrapper {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
+}
+
+.summary-details-wrapper.is-visible {
+  max-height: 800px;
+  opacity: 1;
+}
+
+.btn-disabled {
+  background-color: #cbd5e1 !important;
+  border-color: #cbd5e1 !important;
+  color: #94a3b8 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
 </style>
