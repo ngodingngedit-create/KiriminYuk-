@@ -3,16 +3,23 @@
     <div class="container navbar-container">
       <!-- Logo Section -->
       <a href="#" class="logo-area">
-        <div class="logo-icon-wrapper" :class="{ 'scrolled-logo-icon': isScrolled || forceSolid }">
-          <svg viewBox="0 0 24 24" class="logo-icon-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M2 8.5C7.5 8.5 10 5.5 15 5.5C18.5 5.5 22 7.5 22 7.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-            <path d="M3.5 12.5C9 12.5 11 9.5 16 9.5C19.5 9.5 22 11.5 22 11.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-            <path d="M5 16.5C10.5 16.5 12 13.5 17 13.5C20.5 13.5 22 15.5 22 15.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-          </svg>
-        </div>
+        <!-- Logo saat scrolled/solid: gunakan logo biru -->
+        <img
+          v-if="isScrolled || forceSolid"
+          src="/logo/logo (1).png"
+          alt="KiriminYuk Logo"
+          class="navbar-logo navbar-logo-blue"
+        />
+        <!-- Logo saat glass/transparan: gunakan logo putih -->
+        <img
+          v-else
+          src="/logo/logo (3).png"
+          alt="KiriminYuk Logo"
+          class="navbar-logo navbar-logo-white"
+        />
         <div class="logo-text-block">
-          <span class="logo-text" :class="{ 'text-white': !isScrolled && !forceSolid }">Kirimin<span>Yuk!</span></span>
-          <span class="logo-subtext">DELIVERY</span>
+          <span class="logo-text" :class="{ 'text-white': !isScrolled && !forceSolid }">Qirimin<span>!</span></span>
+          <!-- <span class="logo-subtext">DELIVERY</span> -->
         </div>
       </a>
 
@@ -105,13 +112,12 @@
     <div class="mobile-drawer" :class="{ 'open': isDrawerOpen }">
       <div class="drawer-header">
         <a href="#" class="logo-area" @click="closeDrawer">
-          <div class="logo-icon-wrapper">
-            <svg viewBox="0 0 24 24" class="logo-icon-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M2 8.5C7.5 8.5 10 5.5 15 5.5C18.5 5.5 22 7.5 22 7.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-              <path d="M3.5 12.5C9 12.5 11 9.5 16 9.5C19.5 9.5 22 11.5 22 11.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-              <path d="M5 16.5C10.5 16.5 12 13.5 17 13.5C20.5 13.5 22 15.5 22 15.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-            </svg>
-          </div>
+          <!-- Logo di drawer mobile selalu biru karena background drawer putih -->
+          <img
+            src="/logo/logo (1).png"
+            alt="KiriminYuk Logo"
+            class="navbar-logo navbar-logo-blue drawer-logo"
+          />
           <div class="logo-text-block">
             <span class="logo-text">Kirimin<span>Yuk!</span></span>
             <span class="logo-subtext">DELIVERY</span>
@@ -315,37 +321,32 @@ export default {
   padding-right: 24px;
 }
 
-/* Logo Design (Wing Icon + Text + Subtext) */
+/* Logo Design */
 .logo-area {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  text-decoration: none;
 }
 
-.logo-icon-wrapper {
-  width: 44px;
-  height: 44px;
-  /* White background logo box to stand out on glass */
-  background: #ffffff;
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+/* Logo PNG image - Desktop */
+.navbar-logo {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
   flex-shrink: 0;
   transition: all var(--transition-fast);
+  display: block;
 }
 
-.scrolled-logo-icon {
-  background: linear-gradient(135deg, var(--primary) 0%, #00a2ff 100%);
-  color: white;
-  box-shadow: 0 4px 12px rgba(10, 101, 255, 0.25);
+.navbar-logo-white {
+  /* Logo putih untuk mode glass/transparan */
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.15));
 }
 
-.logo-icon-svg {
-  width: 26px;
-  height: 26px;
+.navbar-logo-blue {
+  /* Logo biru untuk mode solid/scrolled */
+  filter: drop-shadow(0 2px 6px rgba(10, 101, 255, 0.12));
 }
 
 .logo-text-block {
@@ -357,10 +358,12 @@ export default {
 
 .logo-text {
   font-family: var(--font-heading);
-  font-weight: 800;
+  font-weight: 700;
   font-size: 22px;
   color: var(--text-dark);
   letter-spacing: -0.5px;
+  position: relative;
+  right: 10px;
 }
 
 .logo-text.text-white {
@@ -627,14 +630,13 @@ export default {
     padding-right: 14px;
   }
 
-  .logo-icon-wrapper {
-    width: 36px;
+  /* Logo PNG - Mobile responsif */
+  .navbar-logo {
     height: 36px;
   }
 
-  .logo-icon-svg {
-    width: 20px;
-    height: 20px;
+  .drawer-logo {
+    height: 40px;
   }
 
   .logo-text {

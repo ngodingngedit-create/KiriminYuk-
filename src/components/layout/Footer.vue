@@ -4,12 +4,13 @@
       <!-- Info Column -->
       <div class="footer-info-col">
         <a href="#" class="logo-area">
-          <div class="logo-icon-wrapper">
-            <svg viewBox="0 0 24 24" class="logo-icon-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-          <span class="logo-text text-white">Kirimin<span>Yuk!</span></span>
+          <!-- Logo biru diubah putih dengan CSS filter untuk footer biru -->
+          <img
+            src="/logo/logo (1).png"
+            alt="KiriminYuk Logo"
+            class="footer-logo"
+          />
+          <span class="logo-text text-white">Qirimin<span>!</span></span>
         </a>
         <p class="footer-tagline">
           Solusi pengiriman paket kilat dan kargo aman, cepat, dan tepercaya untuk segala kebutuhan bisnis dan personal Anda di seluruh penjuru Nusantara.
@@ -138,31 +139,33 @@ export default {
 .logo-area {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  text-decoration: none;
 }
 
-.logo-icon-wrapper {
-  width: 40px;
-  height: 40px;
-  background: #ffffff; /* White background to stand out on the blue footer */
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary); /* Logo icon in primary blue */
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+/* Footer Logo PNG */
+.footer-logo {
+  height: 52px;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+  /* Logo putih terlihat jelas di background biru */
+  filter: brightness(0) invert(1) drop-shadow(0 2px 8px rgba(0,0,0,0.15));
+  transition: all var(--transition-fast);
 }
 
-.logo-icon-svg {
-  width: 22px;
-  height: 22px;
+.footer-logo:hover {
+  transform: scale(1.05);
+  filter: brightness(0) invert(1) drop-shadow(0 4px 12px rgba(0,0,0,0.25));
 }
 
 .logo-text {
   font-family: var(--font-heading);
-  font-weight: 800;
+  font-weight: 600;
   font-size: 24px;
   letter-spacing: -0.5px;
+  position: relative;
+  right: 10px;
 }
 
 .text-white {
@@ -304,6 +307,10 @@ export default {
     grid-template-columns: 1fr 1fr;
     gap: 40px;
   }
+
+  .footer-logo {
+    height: 44px;
+  }
 }
 
 @media (max-width: 640px) {
@@ -311,6 +318,11 @@ export default {
     grid-template-columns: 1fr;
     gap: 32px;
   }
+
+  .footer-logo {
+    height: 38px;
+  }
+
   .footer-bottom-flex {
     flex-direction: column;
     gap: 12px;
