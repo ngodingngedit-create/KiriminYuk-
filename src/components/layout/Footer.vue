@@ -6,11 +6,11 @@
         <a href="#" class="logo-area">
           <!-- Logo biru diubah putih dengan CSS filter untuk footer biru -->
           <img
-            src="/logo/logo (1).png"
+            src="/logo/logoTeks (1).png"
             alt="KiriminYuk Logo"
             class="footer-logo"
           />
-          <span class="logo-text text-white">Qirimin<span>!</span></span>
+         
         </a>
         <p class="footer-tagline">
           Solusi pengiriman paket kilat dan kargo aman, cepat, dan tepercaya untuk segala kebutuhan bisnis dan personal Anda di seluruh penjuru Nusantara.

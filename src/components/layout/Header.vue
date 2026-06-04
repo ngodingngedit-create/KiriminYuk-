@@ -6,21 +6,18 @@
         <!-- Logo saat scrolled/solid: gunakan logo biru -->
         <img
           v-if="isScrolled || forceSolid"
-          src="/logo/logo (1).png"
+          src="/logo/logoTeks (2).png"
           alt="KiriminYuk Logo"
           class="navbar-logo navbar-logo-blue"
         />
         <!-- Logo saat glass/transparan: gunakan logo putih -->
         <img
           v-else
-          src="/logo/logo (3).png"
+          src="/logo/logoTeks (1).png"
           alt="KiriminYuk Logo"
           class="navbar-logo navbar-logo-white"
         />
-        <div class="logo-text-block">
-          <span class="logo-text" :class="{ 'text-white': !isScrolled && !forceSolid }">Qirimin<span>!</span></span>
-          <!-- <span class="logo-subtext">DELIVERY</span> -->
-        </div>
+       
       </a>
 
       <!-- Desktop Navigation Menu -->
