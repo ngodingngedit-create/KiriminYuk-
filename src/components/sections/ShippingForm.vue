@@ -1134,6 +1134,38 @@ export default {
 
     onMounted(() => {
       document.addEventListener('click', handleOutsideClick);
+      
+      // Load saved details from localStorage if they exist
+      const saved = localStorage.getItem('kiriminyuk_shipping_details');
+      if (saved) {
+        try {
+          const details = JSON.parse(saved);
+          senderName.value = details.senderName || '';
+          senderPhone.value = details.senderPhone || '';
+          senderCity.value = details.senderCity || '';
+          originSearchQuery.value = details.originSearchQuery || '';
+          senderAddress.value = details.senderAddress || '';
+          receiverName.value = details.receiverName || '';
+          receiverPhone.value = details.receiverPhone || '';
+          receiverCity.value = details.receiverCity || '';
+          destSearchQuery.value = details.destSearchQuery || '';
+          receiverAddress.value = details.receiverAddress || '';
+          senderCountry.value = details.senderCountry || '';
+          receiverCountry.value = details.receiverCountry || '';
+          packageType.value = details.packageType || '';
+          packageWeight.value = details.packageWeight || 1;
+          packageLength.value = details.packageLength || 20;
+          packageWidth.value = details.packageWidth || 15;
+          packageHeight.value = details.packageHeight || 10;
+          selectedService.value = details.selectedService || 'instant';
+          pickupDate.value = details.pickupDate || '22 Juni 2026';
+          pickupTime.value = details.pickupTime || '14:00 - 16:00';
+          courierNotes.value = details.courierNotes || '';
+          activeTab.value = details.activeTab || 'domestik';
+        } catch (e) {
+          console.error('Failed to parse saved shipping details', e);
+        }
+      }
     });
 
     onUnmounted(() => {
@@ -1293,9 +1325,39 @@ export default {
         return;
       }
 
-      generateBookingCode();
-      activeStep.value = 4;
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Save details to localStorage
+      const details = {
+        senderName: senderName.value,
+        senderPhone: senderPhone.value,
+        senderCity: senderCity.value,
+        originSearchQuery: originSearchQuery.value,
+        senderAddress: senderAddress.value,
+        receiverName: receiverName.value,
+        receiverPhone: receiverPhone.value,
+        receiverCity: receiverCity.value,
+        destSearchQuery: destSearchQuery.value,
+        receiverAddress: receiverAddress.value,
+        senderCountry: senderCountry.value,
+        receiverCountry: receiverCountry.value,
+        packageType: packageType.value,
+        packageWeight: packageWeight.value,
+        packageLength: packageLength.value,
+        packageWidth: packageWidth.value,
+        packageHeight: packageHeight.value,
+        selectedService: selectedService.value,
+        pickupDate: pickupDate.value,
+        pickupTime: pickupTime.value,
+        courierNotes: courierNotes.value,
+        activeTab: activeTab.value,
+        calculatedOngkir: calculatedOngkir.value,
+        calculatedTotal: calculatedTotal.value,
+        serviceLabel: getServiceLabel.value,
+        serviceEta: getServiceEta.value
+      };
+      localStorage.setItem('kiriminyuk_shipping_details', JSON.stringify(details));
+      
+      // Navigate to payment page
+      window.location.hash = '#payment';
     };
 
     // Stepper navigation helper
@@ -1319,6 +1381,7 @@ export default {
 
     // Reset shipping form state
     const resetForm = () => {
+      localStorage.removeItem('kiriminyuk_shipping_details');
       senderName.value = '';
       senderPhone.value = '';
       senderCity.value = 'rawasari';

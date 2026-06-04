@@ -8,6 +8,8 @@ import HowItWorks from './components/sections/HowItWorks.vue';
 import Stats from './components/sections/Stats.vue';
 import WhyChooseUs from './components/sections/WhyChooseUs.vue';
 import ShippingForm from './components/sections/ShippingForm.vue';
+import Payment from './components/sections/Payment.vue';
+import MobileNavbar from './components/layout/MobileNavbar.vue';
 import Footer from './components/layout/Footer.vue';
 
 const currentView = ref('home');
@@ -15,6 +17,9 @@ const currentView = ref('home');
 const updateRoute = () => {
   if (window.location.hash === '#shipping-form') {
     currentView.value = 'shipping-form';
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  } else if (window.location.hash === '#payment') {
+    currentView.value = 'payment';
     window.scrollTo({ top: 0, behavior: 'instant' });
   } else {
     currentView.value = 'home';
@@ -32,9 +37,9 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="app-layout">
+  <div class="app-layout" :class="{ 'has-mobile-nav': currentView === 'home' }">
     <!-- Header/Navbar -->
-    <Header :forceSolid="currentView === 'shipping-form'" />
+    <Header :forceSolid="currentView === 'shipping-form' || currentView === 'payment'" />
     
     <!-- Main Content Area -->
     <main>
@@ -64,10 +69,17 @@ onUnmounted(() => {
         <!-- Shipping Form Component -->
         <ShippingForm />
       </template>
+      <template v-else-if="currentView === 'payment'">
+        <!-- Payment Component -->
+        <Payment />
+      </template>
     </main>
     
     <!-- Footer -->
     <Footer v-if="currentView === 'home'" />
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <MobileNavbar v-if="currentView === 'home'" />
   </div>
 </template>
 
@@ -91,6 +103,12 @@ section {
 @media (max-width: 1024px) {
   section {
     scroll-margin-top: 70px;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-layout.has-mobile-nav {
+    padding-bottom: 68px; /* Safe space offset for fixed bottom mobile navbar */
   }
 }
 </style>

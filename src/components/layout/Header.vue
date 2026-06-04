@@ -109,19 +109,14 @@
     <div class="mobile-drawer" :class="{ 'open': isDrawerOpen }">
       <div class="drawer-header">
         <a href="#" class="logo-area" @click="closeDrawer">
-          <!-- Logo di drawer mobile selalu biru karena background drawer putih -->
           <img
-            src="/logo/logo (1).png"
+            src="/logo/logoTeks (2).png"
             alt="KiriminYuk Logo"
-            class="navbar-logo navbar-logo-blue drawer-logo"
+            class="drawer-logo"
           />
-          <div class="logo-text-block">
-            <span class="logo-text">Kirimin<span>Yuk!</span></span>
-            <span class="logo-subtext">DELIVERY</span>
-          </div>
         </a>
         <button class="close-drawer-btn" @click="closeDrawer">
-          <X :size="24" />
+          <X :size="18" />
         </button>
       </div>
 
@@ -700,8 +695,33 @@ export default {
     transform: translateX(0);
   }
 
+  .drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    width: 100%;
+  }
+
+  .drawer-logo {
+    height: 38px;
+    width: auto;
+    object-fit: contain;
+  }
+
   .close-drawer-btn {
     color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border-radius: var(--radius-sm);
+    background-color: var(--bg-light);
+    transition: all var(--transition-fast);
+  }
+
+  .close-drawer-btn:hover {
+    background-color: var(--border-color);
   }
 
   .mobile-nav {
